@@ -1,0 +1,41 @@
+apply plugin: 'kotlin'
+
+def versionKotlin = '0.10.195'
+def versionSlf4j = '1.7.9'
+def versionLogback = '1.1.2'
+
+
+buildscript {
+    ext.kotlin_version = '0.10.195'
+    repositories {
+        // mavenLocal()
+        mavenCentral()
+        maven {
+            url 'http://repository.jetbrains.com/all'
+        }
+        // jcenter()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$versionKotlin"
+    compile "org.slf4j:slf4j-api:$versionSlf4j"
+//    compile "org.slf4j:jul-to-slf4j:$versionSlf4j"
+    compile "ch.qos.logback:logback-core:$versionLogback"
+    compile "ch.qos.logback:logback-classic:$versionLogback"
+
+    compile "org.mongodb:mongo-java-driver:2.12.4"
+
+    compile "org.springframework:spring-core:4.1.4.RELEASE"
+    compile "org.springframework.data:spring-data-mongodb:1.6.1.RELEASE"
+}
+repositories {
+    mavenCentral()
+}
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+}
