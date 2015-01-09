@@ -5,11 +5,10 @@ import com.mongodb.MongoClient
 import com.mongodb.BasicDBObject
 import com.mongodb.DBObject
 import com.mongodb.DB
-import at.cpickl.learnmongodb.springmongo
-import at.cpickl.learnmongodb.springmongo
-import at.cpickl.learnmongodb.springmongo
-import at.cpickl.learnmongodb.springmongo
-import at.cpickl.learnmongodb.springmongo
+import java.io.File
+import com.mongodb.gridfs.GridFS
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 // http://docs.mongodb.org/ecosystem/tutorial/getting-started-with-java-driver/
 
@@ -26,6 +25,7 @@ object MongoDemoApp {
 
     private val mongo = MongoManager()
     private val userRepo = UserRepository(mongo.db())
+    private val files = FileStore(mongo.db())
 
     platformStatic fun main(args: Array<String>) {
         exec()
@@ -36,14 +36,17 @@ object MongoDemoApp {
         //        val db = mongo.getDB("myDatabaseName") // gets created, if isnt yet created
         //        val wasAuthenticated = db.authenticate("username", "password".toCharArray())
 
-        mongo.dumpMetaData()
+//        mongo.dumpMetaData()
+//
+//        listUsers()
+//        userRepo.save(springmongo.User("xmas", 42))
+//        listUsers()
+//        userRepo.update("xmas", springmongo.User("xmas3", 112))
+//        userRepo.update("not existing!", springmongo.User("foo", 1))
+//        listUsers()
 
-        listUsers()
-        userRepo.save(springmongo.User("xmas", 42))
-        listUsers()
-        userRepo.update("xmas", springmongo.User("xmas3", 112))
-        userRepo.update("not existing!", springmongo.User("foo", 1))
-        listUsers()
+//        files.save(File("README.md"))
+        files.listAll()
 
         println("mongo ... END")
     }
@@ -57,15 +60,40 @@ object MongoDemoApp {
 
 data class User(val name: String, val age: Int)
 
+// http://docs.mongodb.org/manual/core/gridfs/
+// http://www.mkyong.com/mongodb/java-mongodb-save-image-example/
+class FileStore(private val db: DB) {
+    class object {
+        private val LOG: Logger = LoggerFactory.getLogger(javaClass)
+        private val BUCKET_NAME = "myFileBucketName"
+    }
+    private val fileSystem = GridFS(db, BUCKET_NAME)
+    fun save(fileToStore: File) {
+        LOG.info("save(fileToStore.absolutePath={})", fileToStore.getAbsolutePath())
+        val gfsFile = fileSystem.createFile(fileToStore)
+        gfsFile.save()
+    }
+    fun listAll() {
+        val cursor = fileSystem.getFileList()
+        println("listAll files ...")
+        while (cursor.hasNext()) {
+            println("\tFile: ${cursor.next()}")
+        }
+//        GridFSDBFile imageForOutput = gfsPhoto.findOne(newFileName);
+//        imageForOutput.writeTo("c:\\JavaWebHostingNew.png"); //output to new file
+    }
+
+}
+
 class UserRepository(private val db: DB) {
     class object {
         private val TABLE_NAME = "user"
     }
 
-    private val transformDbo2Domain: (DBObject) -> springmongo.User = { (dbo) -> springmongo.User(dbo.get("name") as String, dbo.get("age") as Int) }
-    private val transformDomain2Dbo: (springmongo.User) -> DBObject = { (domain) -> BasicDBObject().append("name", domain.name).append("age", domain.age) }
+    private val transformDbo2Domain: (DBObject) -> springmongo.UserDbo = { (dbo) -> springmongo.UserDbo(dbo.get("name") as String, dbo.get("age") as Int) }
+    private val transformDomain2Dbo: (springmongo.UserDbo) -> DBObject = { (domain) -> BasicDBObject().append("name", domain.name).append("age", domain.age) }
 
-    fun listAll(): Collection<springmongo.User> {
+    fun listAll(): Collection<springmongo.UserDbo> {
         val table = table()
         val cursor = table.find()
         try {
@@ -75,12 +103,12 @@ class UserRepository(private val db: DB) {
         }
     }
 
-    fun save(user: springmongo.User) {
+    fun save(user: springmongo.UserDbo) {
         println("save(user=${user})")
         /*val result = */table().insert(transformDomain2Dbo(user))
     }
 
-    fun update(queryUserName: String, user: springmongo.User) {
+    fun update(queryUserName: String, user: springmongo.UserDbo) {
         println("update(queryUserName=${queryUserName}, user=${user})")
         val query = BasicDBObject().append("name", queryUserName)
         val result = table().update(query, BasicDBObject().append("\$set", transformDomain2Dbo(user)))
