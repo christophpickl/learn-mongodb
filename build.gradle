@@ -14,6 +14,8 @@ dependencies {
 
     compile "org.springframework:spring-core:4.1.4.RELEASE"
     compile "org.springframework.data:spring-data-mongodb:1.6.1.RELEASE"
+
+    compile "org.mongeez:mongeez:0.9.4"
 }
 
 buildscript {

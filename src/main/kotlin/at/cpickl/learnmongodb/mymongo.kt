@@ -23,9 +23,10 @@ import org.slf4j.LoggerFactory
 
 object MongoDemoApp {
 
+    private val dbName: String = "myDatabase"
     private val mongo = MongoManager()
-    private val userRepo = UserRepository(mongo.db())
-    private val files = FileStore(mongo.db())
+    private val userRepo = UserRepository(mongo.mongo.getDB(dbName))
+    private val files = FileStore(mongo.mongo.getDB(dbName))
 
     platformStatic fun main(args: Array<String>) {
         exec()
@@ -123,32 +124,4 @@ class UserRepository(private val db: DB) {
     }
 
     private fun table() = db.getCollection(TABLE_NAME)
-}
-
-class MongoManager {
-    class object {
-        private val DB_NAME = "myDatabase"
-    }
-    private val mongo = MongoClient("localhost", 27017)
-
-
-    fun dumpMetaData() {
-        val dbNames = mongo.getDatabaseNames()
-        println("Dumping meta data of ${dbNames.size()} database(s).")
-        for (dbName in dbNames) {
-            val db = mongo.getDB(dbName)
-            val collectionNames = db.getCollectionNames()
-            println("\tDatabase '${dbName}' contains ${collectionNames.size()} collection(s).")
-            for (collectionName in collectionNames) { // collection == table
-                val collection = db.getCollection(collectionName)
-                println("\t\tCollection: ${collectionName} (${collection.count()} entries)")
-                val cursor = collection.find()
-                cursor.toArray().fold(1, { (i, dbo) -> println("\t\t- ${i}. ${dbo}"); i + 1 })
-                cursor.close()
-            }
-        }
-    }
-
-    fun db() = mongo.getDB(DB_NAME)
-
 }
