@@ -16,6 +16,8 @@ dependencies {
     compile "org.springframework.data:spring-data-mongodb:1.6.1.RELEASE"
 
     compile "org.mongeez:mongeez:0.9.4"
+
+    compile "org.mongodb.morphia:morphia:0.109"
 }
 
 buildscript {
